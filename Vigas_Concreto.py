@@ -23,9 +23,11 @@ fyk = 500 #MPa
 #Tipo de modelo de cálculo:
 #1 p/ Treliça clássica (ângulo de inclinação das bielas fixo em 45°)
 #2 p/ Treliça generalizada (ângulo de inclinação das bielas entre 30º e 45º)
-tipo = 1
+tipo_vsd = 1
+#Ângulo de inclinação das bielas - Apenas para modelo 2 (entre 30º e 45º)
+teta = 30 #graus
 #Cortante solicitante de cálculo
-vsd = 500 #kN
+vsd = 300 #kN
 
 #ENTRADA DE DADOS DA VIGA PARA CÁLCULO DA FLECHA
 #Momento fletor na seção mais solicitada em serviço (ELS-QP)
@@ -40,9 +42,9 @@ q = 8 #kN/m
 as_calc = 9.47 #cm2
 
 #ITENS QUE DEVEM SER CALCULADOS (s = sim/ n = nao)
-calcular_as_elu = "s"
-calcular_cortante = "n"
-els_deslocamento = "s"
+calcular_as_elu = "n"
+calcular_cortante = "s"
+els_deslocamento = "n"
 
 #ALGORITMO----------------------------------------------------------------------------------------------------------------------
 def add_resultado(resultado):
@@ -52,9 +54,10 @@ def add_resultado(resultado):
 
 #Variáveis globais
 res_elu = ""
+res_vsd = ""
 
 #Função para escolher o que será calculado
-def o_que_calcular(calcular_as_elu, calcular_cortante, els_deslocamento, h, c, diam, msd,bw, fck, fyk, as_calc, mat, q, l_viga, fl, nome):
+def o_que_calcular(calcular_as_elu, calcular_cortante, els_deslocamento, h, c, diam, msd,bw, fck, fyk, as_calc, mat, q, l_viga, fl, nome, tipo_vsd, teta):
     global res_elu
     #CONVERSÃO DE VALORES E DEFINIÇÃO DE VARIÁVEIS
     fcd = fck / (1.4*10) #kN/cm2
@@ -68,7 +71,12 @@ def o_que_calcular(calcular_as_elu, calcular_cortante, els_deslocamento, h, c, d
     if calcular_as_elu == "s":
         calcular_viga(d, h, msd, bw, fck, fcd, fyd, diam)
     if calcular_cortante == "s":
-        calc_vsd()
+        global res_vsd
+        res_vsd += "Cálculo da força cortante: \n"
+        if tipo_vsd == 1:
+            calc_vsd_1(bw, d,fck, fcd, vsd)
+        else:
+            calc_vsd_2(fck, fcd, bw, d, teta, vsd)
     if els_deslocamento == "s":
         els_desl(h, d, bw, fck, msd, as_calc, mat, q, l_viga, fl)
 
@@ -137,14 +145,82 @@ def calc_as_dupla(h, bw, d, fcd, fyd, msd, diam, as_max):
     qtd_barras(diam, as2)
     add_resultado(res_elu)
 
-def calc_vsd(bw,d,fck, fcd):
-
-    fctm = 0.3*math.pow(fck, (2/3))
+def calc_vsd_1(bw, d,fck, fcd, vsd):
     #Calculo da cortante pelo modelo de treliça clássica (ângulo de inclinação das bielas fixo em 45°)
+    global res_vsd
+    fcd = fcd * 10 #MPa
+    res_vsd += "Calculo da cortante pelo modelo 1 - Treliça Clássica (ângulo de inclinação das bielas fixo em 45°) \n"
     #Verificação de compressão nas bielas
-    Vrd2 = 0.27*( 1 - (fck/250))*fcd*bw*d
-    #Calculo da armadura transversal
-    #as_sw_min = 20*
+    vrd2 = 0.027*( 1 - (fck/250))*fcd*bw*d #kN
+    res_vsd += f"Força cortante solicitante: {vsd:.2f} kN \n"
+    res_vsd += f"Força resistente a compressão na biela: {vrd2:.2f} kN \n"
+    if vsd > vrd2:
+        res_vsd += f"A força cortante: {vsd:.2f} kN é maior do que a força resistente Vrd2: {vrd2:.2f} kN - NÃO PASSOU !\n"
+    else:
+        res_vsd += f'Verificação de compressão nas bielas: OK \n'
+    #Força cortante referente à armadura mínima
+    vsw_min = 0.0137 * bw * d * math.pow(fck, (2/3)) #kN
+    if vsd < vsw_min:
+        vsd = vsw_min
+    res_vsd += f"Força cortante mínima: {vsw_min:.2f} kN \n"
+    #Armadura transversal
+    asw_90 = 2.55*(vsd / d) - 0.023 * bw * math.pow(fck, (2/3)) #cm2/m
+    res_vsd += f'Área de aço dos estribos: {asw_90:.2f} cm2/m \n'
+    #Diametros do estribo
+    diam_max = bw  #mm
+    res_vsd += f'Diâmetro dos estribos: 5 mm à {diam_max:.2f} mm \n'
+    #Espaçamento máximo dos estribos
+    if vsd <= 0.67 * vrd2:
+        esp_max = 0.6*d
+        if esp_max > 30:
+            esp_max = 30
+    else:
+        esp_max = 0.3*d
+        if esp_max > 20:
+            esp_max = 20
+    res_vsd += f'Espaçamento máximo dos estribos: {esp_max:.2f} cm \n'
+    add_resultado(res_vsd)
+
+def calc_vsd_2(fck, fcd, bw, d, teta, vsd):
+    #Calculo da cortante pelo modelo de treliça clássica (ângulo de inclinação das bielas fixo em 45°)
+    global res_vsd
+    #converte graus em radianos
+    teta = math.radians(teta)
+    fcd = fcd * 10 #MPa
+    res_vsd += "Cálculo pelo Modelo 2 - Treliça generalizada (ângulo de inclinação das bielas entre 30º e 45º) \n"
+    #Força cortante última 
+    vrd2 = 0.054 * (1 - fck/250) * fcd * bw * d * math.sin(teta) * math.cos(teta)
+    res_vsd += f'Força cortante de cálculo: {vsd:.2f} kN \n'
+    res_vsd += f'Força cortante última: {vrd2:.2f} kN \n'
+    if vsd > vrd2:
+        res_vsd += "NÃO PASSOU !'- Força cortante maior do que força resistente \n"
+    else:
+        res_vsd += "Verificação da força cortante: OK, não ocorrerá esmagamento da biela! \n"
+    #Força cortante mínima
+    fctd = 0.15 * math.pow(fck, (2/3)) #MPa
+    vc0 = 0.6 * (fctd / 10) * bw * d #kN
+    vc1 = vc0 * ((vrd2 - vsd) / (vrd2 - vc0)) #kN
+    vsd_min = vc1 + 0.0047 * bw * d * math.pow(fck, (2/3)) * (1/ math.tan(teta)) #kN
+    res_vsd += f'Força cortante mínima: {vsd_min:.2f} kN \n'
+    if vsd < vsd_min:
+        vsd = vsd_min
+    #Armadura transversal
+    asw_90 = 2.55*((vsd - vc1) / (d *(1/ math.tan(teta) ))) #cm2/m
+    res_vsd += f'Área de aço dos estribos: {asw_90:.2f} cm2/m \n'
+    #Diametros do estribo
+    diam_max = bw  #mm
+    res_vsd += f'Diâmetro dos estribos: 5 mm à {diam_max:.2f} mm \n'
+    #Espaçamento máximo dos estribos
+    if vsd <= 0.67 * vrd2:
+        esp_max = 0.6*d
+        if esp_max > 30:
+            esp_max = 30
+    else:
+        esp_max = 0.3*d
+        if esp_max > 20:
+            esp_max = 20
+    res_vsd += f'Espaçamento máximo dos estribos: {esp_max:.2f} cm \n'
+    add_resultado(res_vsd)
 
 def els_desl(h, d, bw, fck, msd, as_calc, mat, q, l_viga, fl):
     res_els = "\nResultados para deslocamento da viga (ELS) \n"
@@ -257,7 +333,13 @@ def qtd_barras(diam, as_calc):
         n_barras = math.ceil(as_calc / b32)
     res_elu += f'Qtd de barras de {diam:.2f} mm: {n_barras:.2f} \n'
 
-o_que_calcular(calcular_as_elu, calcular_cortante, els_deslocamento, h, c, diam, msd,bw, fck, fyk, as_calc, mat, q, l_viga, fl, nome)
+def ancoragem():
+    pass
+
+def torcao():
+    pass
+
+o_que_calcular(calcular_as_elu, calcular_cortante, els_deslocamento, h, c, diam, msd,bw, fck, fyk, as_calc, mat, q, l_viga, fl, nome, tipo_vsd, teta)
 
 
 
