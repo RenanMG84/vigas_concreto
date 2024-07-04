@@ -1,0 +1,40 @@
+Viga: V101 
+Altura (h): 50 cm 
+Base (bw): 25 cm 
+ 
+Viga: V101 
+Altura (h): 50 cm 
+Base (bw): 25 cm 
+ 
+Resultados para ELU:
+Armadura mínima: 1.88 cm2 
+Área de aço máxima: 50.00 cm2 
+Cálculo da armadura: Armadura dupla 
+Relação x/d acima de 0,45 - Calculado momento fletor limite M1: 18152.68 kN*cm 
+Área de aço p/ armadura tracionada: 23.88 cm2 
+Área de aço p/ armadura comprimida: 12.56 cm2 
+Quant. barras adotadas p/ armadura tracionada: 
+Qtd de barras de 12.50 mm: 20.00 
+Quant. barras adotadas p/ armadura comprimida: 
+Qtd de barras de 12.50 mm: 11.00 
+
+Resultados para deslocamento da viga (ELS) 
+Propriedades da seção bruta: 
+Inércia da seção bruta: 260417 cm4 
+Fctm: 0.22 kN/cm2 
+Momento de fissuração (Mr): 3454 kN*cm 
+Ocorre fissuração! 
+Propriedades da viga no Estádio 2:
+Ae: 9.87 
+a1: 12.50 cm 
+a2: 93.42 cm2 
+a3: -4203.97 cm3 
+Profundidade da LN: 14.98 cm 
+Inércia da viga fissurada: 112204 cm4 
+Inércia média entre Estádios I e II (Branson): 112387 cm4 
+Deslocamento máximo da viga: 
+Módulo de deformação tangente inicial (Eci): 25044 MPa 
+Módulo de deformação secante (Ecs): 21287 MPa 
+Deslocamento máximo da viga: 2.61 cm
+Deslocamento limite da viga: 2.80 cm
+Passou !
