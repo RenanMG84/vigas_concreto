@@ -1,21 +1,26 @@
-import matplotlib.pyplot as plt
-from sympy import symbols, Eq
-from sympy.plotting import plot
+from docx import Document
+import os
 
-# Define symbols
-x, y = symbols('x y')
+#Cria um novo documento
+res = Document()
+ #Add título
+res.add_heading("Cálculo de vigas de concreto armado")
+res.add_paragraph("")
+res.add_paragraph("Parágrafo 1")
+res.add_paragraph("")
+res.add_paragraph("Parágrafo 2")
+res.add_paragraph("")
+res.add_paragraph("Parágrafo 3")
+res.add_paragraph("")
 
-# Define equations
-equation1 = Eq(x*2 + y*2, 1)
-equation2 = Eq(x - y, 1)
+paragraph = res.add_paragraph("")
+paragraph.add_run('Aqui vai o texto 2 !').bold = True
 
-# Create a plot
-fig, ax = plt.subplots()
-ax.text(0.1, 0.8, f'Equation 1: ${equation1}$', fontsize=12)
-ax.text(0.1, 0.6, f'Equation 2: ${equation2}$', fontsize=12)
+res.add_paragraph("Parágrafo 4")
+res.add_paragraph("")
 
-# Hide axes
-ax.axis('off')
+paragraph = res.add_paragraph("")
+paragraph.add_run('Aqui vai o texto 3 !').bold = True
+res.save("teste.docx")
 
-# Display plot
-plt.show()
+
